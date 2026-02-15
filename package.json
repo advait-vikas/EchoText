@@ -1,0 +1,21 @@
+{
+  "name": "echotext",
+  "productName": "EchoText",
+  "version": "1.0.0",
+  "description": "AI-powered audio transcription app with text-audio synchronization",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "cd backend && python -m uvicorn main:app --port 8000 & cd ../frontend && npm run dev",
+    "electron:dev": "electron ."
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.13.5",
+    "framer-motion": "^12.34.0",
+    "lucide-react": "^0.564.0"
+  },
+  "devDependencies": {
+    "electron": "^40.4.1"
+  }
+}

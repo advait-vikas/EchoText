@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EchoText | Audio to Text Transcription</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary": "#135bec",
+                "background-light": "#f6f6f8",
+                "background-dark": "#101622",
+                "surface-dark": "#1a2233",
+                "border-dark": "#2d3748"
+              },
+              fontFamily: {
+                "display": ["Inter", "sans-serif"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+      </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .upload-dashed {
+            background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='12' ry='12' stroke='%23135bec66' stroke-width='3' stroke-dasharray='12%2c 12' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+            border-radius: 0.75rem;
+        }
+        .upload-dashed:hover {
+            background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='12' ry='12' stroke='%23135bec' stroke-width='3' stroke-dasharray='12%2c 12' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 min-h-screen flex flex-col font-display transition-colors duration-300">
+<!-- Header -->
+<header class="w-full border-b border-slate-200 dark:border-border-dark py-4 px-8 bg-white/50 dark:bg-background-dark/50 backdrop-blur-md sticky top-0 z-50">
+<div class="max-w-7xl mx-auto flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="bg-primary p-1.5 rounded-lg">
+<span class="material-icons text-white text-xl">graphic_eq</span>
+</div>
+<span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">EchoText</span>
+</div>
+<nav class="flex items-center gap-6">
+<a class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors" href="#">My Transcriptions</a>
+<button class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all">
+                    Upgrade Pro
+                </button>
+</nav>
+</div>
+</header>
+<main class="flex-grow flex flex-col items-center justify-center px-4 py-12">
+<!-- Hero Section -->
+<div class="text-center mb-10 max-w-2xl">
+<h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-4 tracking-tight">
+                Turn Audio into Text <br/><span class="text-primary">in Seconds.</span>
+</h1>
+<p class="text-slate-600 dark:text-slate-400 text-lg">
+                Simple, fast, and accurate transcription for meetings, podcasts, and interviews.
+            </p>
+</div>
+<!-- Upload Container -->
+<div class="w-full max-w-3xl bg-white dark:bg-surface-dark p-8 rounded-xl shadow-xl border border-slate-200 dark:border-border-dark">
+<!-- Drag & Drop Area -->
+<div class="upload-dashed group relative flex flex-col items-center justify-center p-12 mb-8 cursor-pointer transition-all hover:bg-primary/5">
+<div class="bg-primary/10 dark:bg-primary/20 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform">
+<span class="material-icons text-primary text-4xl">cloud_upload</span>
+</div>
+<h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">Drag &amp; drop your audio file</h3>
+<p class="text-slate-500 dark:text-slate-400 mb-6">MP3, WAV, M4A (Max 50MB)</p>
+<button class="bg-primary text-white px-8 py-3 rounded-lg font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95 transition-all">
+                    Select File
+                </button>
+</div>
+<!-- URL Input Option -->
+<div class="relative flex items-center gap-4">
+<div class="flex-grow h-px bg-slate-200 dark:bg-border-dark"></div>
+<span class="text-slate-400 dark:text-slate-500 text-sm font-medium uppercase tracking-widest">or</span>
+<div class="flex-grow h-px bg-slate-200 dark:bg-border-dark"></div>
+</div>
+<div class="mt-8">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2" for="audio-url">Paste a URL (YouTube, Drive, Dropbox)</label>
+<div class="flex gap-2">
+<div class="relative flex-grow">
+<span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">link</span>
+<input class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none text-slate-900 dark:text-white" id="audio-url" placeholder="https://www.youtube.com/watch?v=..." type="text"/>
+</div>
+<button class="bg-slate-900 dark:bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-all">
+                        Fetch
+                    </button>
+</div>
+</div>
+</div>
+<!-- Recent Files Section -->
+<div class="w-full max-w-3xl mt-16">
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+<span class="material-icons text-primary text-lg">history</span>
+                    Recent Activity
+                </h2>
+<a class="text-sm font-medium text-primary hover:underline" href="#">View All</a>
+</div>
+<div class="space-y-3">
+<!-- File Item 1 -->
+<div class="flex items-center justify-between p-4 bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-border-dark hover:border-primary/50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="bg-emerald-500/10 p-2 rounded-lg">
+<span class="material-icons text-emerald-500">audiotrack</span>
+</div>
+<div>
+<h4 class="font-semibold text-slate-900 dark:text-white text-sm">Team_Sync_March_12.mp3</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">12.4 MB • 24:15 • Completed 2h ago</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-bold uppercase tracking-wider">Completed</span>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+<span class="material-icons text-xl">download</span>
+</button>
+</div>
+</div>
+<!-- File Item 2 (Processing) -->
+<div class="flex items-center justify-between p-4 bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-border-dark">
+<div class="flex items-center gap-4">
+<div class="bg-primary/10 p-2 rounded-lg">
+<span class="material-icons text-primary animate-pulse">sync</span>
+</div>
+<div class="flex-grow">
+<h4 class="font-semibold text-slate-900 dark:text-white text-sm">Customer_Interview_Ref09.wav</h4>
+<div class="mt-1.5 w-48 h-1 bg-slate-100 dark:bg-background-dark rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 65%;"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">65% Processing</span>
+<button class="text-slate-400 cursor-not-allowed">
+<span class="material-icons text-xl">more_vert</span>
+</button>
+</div>
+</div>
+<!-- File Item 3 -->
+<div class="flex items-center justify-between p-4 bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-border-dark hover:border-primary/50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="bg-amber-500/10 p-2 rounded-lg">
+<span class="material-icons text-amber-500">mic</span>
+</div>
+<div>
+<h4 class="font-semibold text-slate-900 dark:text-white text-sm">Podcast_Draft_Final.mp3</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">45.8 MB • 1:12:05 • Completed Yesterday</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-bold uppercase tracking-wider">Completed</span>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+<span class="material-icons text-xl">download</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="py-8 px-8 border-t border-slate-200 dark:border-border-dark bg-white dark:bg-background-dark">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+<div class="flex items-center gap-2 opacity-50">
+<span class="material-icons text-sm">graphic_eq</span>
+<span class="text-sm font-medium">© 2024 EchoText Inc.</span>
+</div>
+<div class="flex gap-8">
+<a class="text-sm text-slate-500 hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="text-sm text-slate-500 hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="text-sm text-slate-500 hover:text-primary transition-colors" href="#">Support</a>
+<a class="text-sm text-slate-500 hover:text-primary transition-colors" href="#">API Docs</a>
+</div>
+<div class="flex gap-4">
+<a class="w-8 h-8 rounded-full bg-slate-100 dark:bg-surface-dark flex items-center justify-center text-slate-500 hover:bg-primary hover:text-white transition-all" href="#">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"></path></svg>
+</a>
+<a class="w-8 h-8 rounded-full bg-slate-100 dark:bg-surface-dark flex items-center justify-center text-slate-500 hover:bg-primary hover:text-white transition-all" href="#">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.041-1.416-4.041-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path></svg>
+</a>
+</div>
+</div>
+</footer>
+<!-- Image Description Placeholder for background/visual context -->
+<div class="hidden">
+<img data-alt="Abstract vibrant audio waves gradient background blue" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4DfIqe-PfppeFF-veP5bPwTnQnqM1t14EODnLo4tcQwJvWnMYEE4nwZ_u4S1EA6y0GsIexd_9gfAYknTFQ5vMoaY_6NBFNUU_NPRAp3IxXVaXY4GTfisqbpkd8STEFVAU9Ba_P0Cf9LnMwgxViN5qjES3Mc1c-V7Tffdkw2-mmpoUO60N0PO9UltIIFcp1gP4qOq9Jxf4ujVn6sAPxxCXGdeKYBUjllp1Qea1z_y8diqCxnfBl3jrdpcr4V5B_zKvJaCvzzcF_E6q"/>
+</div>
+</body></html>

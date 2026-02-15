@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EchoText Transcription Editor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .transcript-word:hover {
+            background-color: rgba(19, 91, 236, 0.15);
+            border-bottom: 2px solid #135bec;
+            cursor: pointer;
+        }
+        .active-word {
+            background-color: rgba(19, 91, 236, 0.25);
+            color: white;
+            border-radius: 0.125rem;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(19, 91, 236, 0.2);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #135bec;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 h-screen flex flex-col overflow-hidden">
+<!-- Top Navigation Bar -->
+<header class="h-16 border-b border-primary/10 bg-white dark:bg-[#151c2c] px-6 flex items-center justify-between z-10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary flex items-center justify-center rounded-lg">
+<span class="material-icons text-white">record_voice_over</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">EchoText <span class="text-primary font-medium text-sm ml-1 uppercase tracking-widest">Editor</span></h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-semibold">
+<span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                Autosaved at 14:20
+            </div>
+<div class="relative group">
+<button class="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-all font-medium">
+<span class="material-icons text-sm">file_download</span>
+                    Export
+                    <span class="material-icons text-sm">expand_more</span>
+</button>
+<div class="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1a2333] border border-primary/10 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+<div class="p-2 space-y-1">
+<button class="w-full flex items-center gap-3 px-3 py-2 hover:bg-primary/10 rounded-lg text-sm transition-colors">
+<span class="material-icons text-primary text-lg">picture_as_pdf</span> PDF Document
+                        </button>
+<button class="w-full flex items-center gap-3 px-3 py-2 hover:bg-primary/10 rounded-lg text-sm transition-colors">
+<span class="material-icons text-primary text-lg">description</span> Microsoft Word
+                        </button>
+<button class="w-full flex items-center gap-3 px-3 py-2 hover:bg-primary/10 rounded-lg text-sm transition-colors">
+<span class="material-icons text-primary text-lg">notes</span> Plain Text
+                        </button>
+</div>
+</div>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 border border-primary/30 hover:bg-primary/5 text-slate-700 dark:text-slate-300 rounded-lg transition-all font-medium">
+<span class="material-icons text-sm">share</span>
+                Share
+            </button>
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border border-primary/30">
+<img alt="User" data-alt="User profile avatar portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAugrY2VcoQEThPTPOBelFBg9h2cA0k0tyzrox3JduTXnwuraQ2k5h5ouB_p3Szi4C03YlC8Qp6Foz8j9y82UP4zCGpDAaagSiLVUyQykVP0KAm8S6sfZtbY5Wk0AZJ_KZk8RMQRzZRpIe1DOyPGcjfXsNuywmu1zjMbXUah4A2AhuktDUr_4CdhUwMEwmR_EIDz2ZD23CBNXXVEKfQT1zWbJ0eCFwf2_JYY5cJrLl9bTWaJQihEZQV4TtrhuA3Y5aGrbv476Midw5n"/>
+</div>
+</div>
+</header>
+<main class="flex-1 flex overflow-hidden">
+<!-- Audio Control Sidebar (Left) -->
+<aside class="w-80 border-r border-primary/10 bg-white dark:bg-[#151c2c] flex flex-col p-6 space-y-8">
+<div class="space-y-4">
+<div class="relative w-full aspect-video rounded-xl bg-primary/5 border border-primary/10 overflow-hidden flex flex-center items-center justify-center">
+<img alt="Audio Visual" class="absolute inset-0 object-cover opacity-20" data-alt="Abstract waveform visualization background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuArk1w3sBvdHAdyTxs4D1NSBDvYI_XhZ6sHlzoOcTdE4l3kfbn1hs7-a4OEKwAfLoZsJQno2AviS1S5Sx0hQUuiwV3G7Jqan4Hw9LNTdveFkP0CQph6WWohPSWB9HWMe3KeRZwS4wk1-j06aPIVTnbxWpTZ5bvgkwrwQzP1Baaf89a5_ecMKkISMG_82JpCahDu2N9h_MdzdwxDCEIVPg6TjfZXs9X5XbQWTwH7myQxFOGJRCxF9sYEqK3zNBQFNfYUqDV2RuPhmRvX"/>
+<div class="relative text-center">
+<span class="material-icons text-primary text-5xl">audiotrack</span>
+<p class="text-xs font-semibold text-primary/60 mt-2 uppercase tracking-tighter">interview_042.wav</p>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-medium text-slate-500">
+<span>01:42</span>
+<span>05:30</span>
+</div>
+<div class="relative w-full h-1.5 bg-primary/10 rounded-full cursor-pointer group">
+<div class="absolute h-full bg-primary rounded-full" style="width: 32%"></div>
+<div class="absolute h-4 w-4 bg-white border-2 border-primary rounded-full -top-[5px] shadow-lg shadow-primary/20 opacity-0 group-hover:opacity-100 transition-opacity" style="left: 32%"></div>
+</div>
+</div>
+<div class="flex items-center justify-center gap-6">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-icons text-2xl">replay_10</span>
+</button>
+<button class="w-14 h-14 bg-primary text-white rounded-full shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+<span class="material-icons text-4xl">play_arrow</span>
+</button>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-icons text-2xl">forward_10</span>
+</button>
+</div>
+</div>
+<div class="space-y-6">
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Playback Speed</label>
+<span class="text-xs font-bold text-primary px-2 py-0.5 bg-primary/10 rounded">1.25x</span>
+</div>
+<input class="w-full accent-primary h-1 bg-primary/10 rounded-lg appearance-none cursor-pointer" max="2.0" min="0.5" step="0.25" type="range" value="1.25"/>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-400">Volume</label>
+<span class="material-icons text-slate-400 text-sm">volume_up</span>
+</div>
+<input class="w-full accent-primary h-1 bg-primary/10 rounded-lg appearance-none cursor-pointer" type="range"/>
+</div>
+</div>
+<div class="mt-auto pt-6 border-t border-primary/10">
+<h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Keyboard Shortcuts</h3>
+<div class="grid grid-cols-2 gap-3 text-[11px]">
+<div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+<kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700">Space</kbd> Play/Pause
+                    </div>
+<div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+<kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700">Esc</kbd> Rewind 5s
+                    </div>
+</div>
+</div>
+</aside>
+<!-- Transcription Workspace (Right) -->
+<section class="flex-1 bg-background-light dark:bg-[#101622] overflow-y-auto p-12">
+<div class="max-w-4xl mx-auto space-y-12 pb-24">
+<!-- Paragraph 1 -->
+<div class="group relative flex gap-6">
+<div class="w-24 shrink-0">
+<div class="text-[11px] font-bold text-primary/40 mb-1">00:00:00</div>
+<div class="text-sm font-bold text-primary tracking-tight">SPEAKER 1</div>
+</div>
+<div class="flex-1">
+<p class="text-lg leading-relaxed text-slate-700 dark:text-slate-300 font-display">
+<span class="transcript-word transition-all px-0.5">Welcome</span>
+<span class="transcript-word transition-all px-0.5">everyone</span>
+<span class="transcript-word transition-all px-0.5">to</span>
+<span class="transcript-word transition-all px-0.5">our</span>
+<span class="transcript-word transition-all px-0.5">weekly</span>
+<span class="transcript-word transition-all px-0.5">roundtable</span>
+<span class="transcript-word transition-all px-0.5">discussion.</span>
+<span class="transcript-word transition-all px-0.5">Today</span>
+<span class="transcript-word transition-all px-0.5">we</span>
+<span class="transcript-word transition-all px-0.5">are</span>
+<span class="transcript-word transition-all px-0.5">diving</span>
+<span class="transcript-word transition-all px-0.5">deep</span>
+<span class="transcript-word transition-all px-0.5">into</span>
+<span class="transcript-word transition-all px-0.5">the</span>
+<span class="transcript-word transition-all px-0.5">future</span>
+<span class="transcript-word transition-all px-0.5">of</span>
+<span class="transcript-word transition-all px-0.5">generative</span>
+<span class="transcript-word transition-all px-0.5">AI</span>
+<span class="transcript-word transition-all px-0.5">and</span>
+<span class="transcript-word transition-all px-0.5">how</span>
+<span class="transcript-word transition-all px-0.5">it</span>
+<span class="transcript-word transition-all px-0.5">is</span>
+<span class="transcript-word transition-all px-0.5">reshaping</span>
+<span class="transcript-word transition-all px-0.5">creative</span>
+<span class="transcript-word transition-all px-0.5">industries.</span>
+</p>
+</div>
+<button class="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-primary transition-all self-start">
+<span class="material-icons text-xl">edit</span>
+</button>
+</div>
+<!-- Paragraph 2 -->
+<div class="group relative flex gap-6">
+<div class="w-24 shrink-0">
+<div class="text-[11px] font-bold text-primary/40 mb-1">00:01:12</div>
+<div class="text-sm font-bold text-indigo-500 tracking-tight">SPEAKER 2</div>
+</div>
+<div class="flex-1">
+<p class="text-lg leading-relaxed text-slate-700 dark:text-slate-300 font-display">
+<span class="active-word transcript-word transition-all px-0.5">That's</span>
+<span class="active-word transcript-word transition-all px-0.5">a</span>
+<span class="active-word transcript-word transition-all px-0.5">fascinating</span>
+<span class="active-word transcript-word transition-all px-0.5">topic,</span>
+<span class="transcript-word transition-all px-0.5">James.</span>
+<span class="transcript-word transition-all px-0.5">I</span>
+<span class="transcript-word transition-all px-0.5">think</span>
+<span class="transcript-word transition-all px-0.5">what's</span>
+<span class="transcript-word transition-all px-0.5">often</span>
+<span class="transcript-word transition-all px-0.5">overlooked</span>
+<span class="transcript-word transition-all px-0.5">is</span>
+<span class="transcript-word transition-all px-0.5">the</span>
+<span class="transcript-word transition-all px-0.5">human</span>
+<span class="transcript-word transition-all px-0.5">element</span>
+<span class="transcript-word transition-all px-0.5">in</span>
+<span class="transcript-word transition-all px-0.5">the</span>
+<span class="transcript-word transition-all px-0.5">workflow.</span>
+<span class="transcript-word transition-all px-0.5">We</span>
+<span class="transcript-word transition-all px-0.5">see</span>
+<span class="transcript-word transition-all px-0.5">tools</span>
+<span class="transcript-word transition-all px-0.5">like</span>
+<span class="transcript-word transition-all px-0.5">EchoText</span>
+<span class="transcript-word transition-all px-0.5">actually</span>
+<span class="transcript-word transition-all px-0.5">augmenting</span>
+<span class="transcript-word transition-all px-0.5">creativity</span>
+<span class="transcript-word transition-all px-0.5">rather</span>
+<span class="transcript-word transition-all px-0.5">than</span>
+<span class="transcript-word transition-all px-0.5">replacing</span>
+<span class="transcript-word transition-all px-0.5">it.</span>
+<span class="transcript-word transition-all px-0.5">For</span>
+<span class="transcript-word transition-all px-0.5">instance,</span>
+<span class="transcript-word transition-all px-0.5">journalists</span>
+<span class="transcript-word transition-all px-0.5">can</span>
+<span class="transcript-word transition-all px-0.5">now</span>
+<span class="transcript-word transition-all px-0.5">focus</span>
+<span class="transcript-word transition-all px-0.5">on</span>
+<span class="transcript-word transition-all px-0.5">the</span>
+<span class="transcript-word transition-all px-0.5">narrative</span>
+<span class="transcript-word transition-all px-0.5">instead</span>
+<span class="transcript-word transition-all px-0.5">of</span>
+<span class="transcript-word transition-all px-0.5">the</span>
+<span class="transcript-word transition-all px-0.5">tedium</span>
+<span class="transcript-word transition-all px-0.5">of</span>
+<span class="transcript-word transition-all px-0.5">typing</span>
+<span class="transcript-word transition-all px-0.5">out</span>
+<span class="transcript-word transition-all px-0.5">every</span>
+<span class="transcript-word transition-all px-0.5">single</span>
+<span class="transcript-word transition-all px-0.5">word.</span>
+</p>
+</div>
+<button class="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-primary transition-all self-start">
+<span class="material-icons text-xl">edit</span>
+</button>
+</div>
+<!-- Paragraph 3 -->
+<div class="group relative flex gap-6">
+<div class="w-24 shrink-0">
+<div class="text-[11px] font-bold text-primary/40 mb-1">00:03:45</div>
+<div class="text-sm font-bold text-primary tracking-tight">SPEAKER 1</div>
+</div>
+<div class="flex-1">
+<p class="text-lg leading-relaxed text-slate-700 dark:text-slate-300 font-display">
+<span class="transcript-word transition-all px-0.5">Exactly.</span>
+<span class="transcript-word transition-all px-0.5">And</span>
+<span class="transcript-word transition-all px-0.5">there's</span>
+<span class="transcript-word transition-all px-0.5">an</span>
+<span class="transcript-word transition-all px-0.5">efficiency</span>
+<span class="transcript-word transition-all px-0.5">gain</span>
+<span class="transcript-word transition-all px-0.5">of</span>
+<span class="transcript-word transition-all px-0.5">nearly</span>
+<span class="transcript-word transition-all px-0.5">seventy</span>
+<span class="transcript-word transition-all px-0.5">percent</span>
+<span class="transcript-word transition-all px-0.5">in</span>
+<span class="transcript-word transition-all px-0.5">some</span>
+<span class="transcript-word transition-all px-0.5">test</span>
+<span class="transcript-word transition-all px-0.5">cases</span>
+<span class="transcript-word transition-all px-0.5">we've</span>
+<span class="transcript-word transition-all px-0.5">run.</span>
+<span class="transcript-word transition-all px-0.5">The</span>
+<span class="transcript-word transition-all px-0.5">ability</span>
+<span class="transcript-word transition-all px-0.5">to</span>
+<span class="transcript-word transition-all px-0.5">instantly</span>
+<span class="transcript-word transition-all px-0.5">search</span>
+<span class="transcript-word transition-all px-0.5">through</span>
+<span class="transcript-word transition-all px-0.5">hours</span>
+<span class="transcript-word transition-all px-0.5">of</span>
+<span class="transcript-word transition-all px-0.5">recorded</span>
+<span class="transcript-word transition-all px-0.5">content</span>
+<span class="transcript-word transition-all px-0.5">is</span>
+<span class="transcript-word transition-all px-0.5">a</span>
+<span class="transcript-word transition-all px-0.5">game-changer.</span>
+</p>
+</div>
+<button class="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-primary transition-all self-start">
+<span class="material-icons text-xl">edit</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer Status Bar -->
+<footer class="h-10 border-t border-primary/10 bg-white dark:bg-[#151c2c] px-6 flex items-center justify-between text-[11px] font-medium text-slate-500">
+<div class="flex items-center gap-6">
+<span class="flex items-center gap-1.5"><span class="material-icons text-xs text-primary">check_circle</span> All changes saved</span>
+<span class="flex items-center gap-1.5"><span class="material-icons text-xs">format_align_left</span> 1,248 Words</span>
+<span class="flex items-center gap-1.5"><span class="material-icons text-xs">timer</span> 05:30 Total Length</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="hover:text-primary transition-colors">Help &amp; Support</button>
+<button class="hover:text-primary transition-colors">Keyboard Shortcuts</button>
+<div class="flex items-center gap-2">
+<span class="text-slate-400">Zoom</span>
+<div class="flex items-center bg-primary/5 rounded border border-primary/10 px-2 py-0.5">
+<button class="hover:text-primary">-</button>
+<span class="mx-2">100%</span>
+<button class="hover:text-primary">+</button>
+</div>
+</div>
+</div>
+</footer>
+</body></html>
