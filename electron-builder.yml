@@ -1,0 +1,26 @@
+appId: com.echotext.app
+productName: EchoText
+directories:
+  output: release
+  buildResources: build
+files:
+  - from: .
+    filter:
+      - package.json
+      - electron/**/*
+      - frontend/dist/**/*
+extraResources:
+  - from: backend/build/exe.win-amd64-3.12
+    to: backend/echotext-backend
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: electron/icon.png
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: EchoText

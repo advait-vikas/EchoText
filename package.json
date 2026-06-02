@@ -6,7 +6,11 @@
   "main": "electron/main.js",
   "scripts": {
     "start": "cd backend && python -m uvicorn main:app --port 8000 & cd ../frontend && npm run dev",
-    "electron:dev": "electron ."
+    "electron:dev": "electron .",
+    "backend:build": "cd backend && python setup.py build",
+    "electron:build": "npm run build --prefix frontend && electron-builder",
+    "electron:pack": "electron-builder --dir",
+    "build:all": "npm run build --prefix frontend && npm run backend:build && npm run electron:build"
   },
   "author": "",
   "license": "MIT",
@@ -16,6 +20,8 @@
     "lucide-react": "^0.564.0"
   },
   "devDependencies": {
-    "electron": "^40.4.1"
+    "electron": "^40.4.1",
+    "electron-builder": "^25.1.8",
+    "electron-packager": "^17.1.2"
   }
 }

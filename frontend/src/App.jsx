@@ -1,5 +1,87 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import { marked } from 'marked';
+
+// Helper to convert summaries dynamically to markdown (handles legacy DB format compatibility)
+const getMarkdown = (sum) => {
+  if (!sum) return { mom: '', summary: '' };
+  
+  if (sum.mom_markdown) {
+    return {
+      mom: sum.mom_markdown,
+      summary: sum.summary_markdown || ''
+    };
+  }
+  
+  // Convert old structure to markdown format on the fly!
+  const topicsStr = sum.key_topics ? sum.key_topics.join(', ') : 'None';
+  const actionsList = sum.action_items && sum.action_items.length > 0 
+    ? sum.action_items.map((item, idx) => `| ${idx+1} | ${item} | Inferred Speaker | DD/MM/YYYY | Pending |`).join('\n')
+    : '| 1 | Review transcript details | All | DD/MM/YYYY | Pending |';
+    
+  const decisionsList = sum.decisions && sum.decisions.length > 0
+    ? sum.decisions.map(item => `- ${item}`).join('\n')
+    : '- Review and confirm discussion details.';
+
+  const oldMomMarkdown = `# MINUTES OF MEETING (MoM)
+
+## Meeting Details
+- **Project/Team Name:** EchoText Project
+- **Meeting Title:** Transcription Summary (Old Format)
+- **Date:** Saved Date
+- **Time:** Unknown
+- **Venue/Platform:** Local System
+- **Meeting Conducted By:** Unknown
+- **Minutes Prepared By:** EchoText Summarizer
+
+## Attendees
+1. Speakers - Roles Inferred
+
+## Agenda
+- General Review
+
+## Discussion Points
+### 1. Key Topics Discussed
+- Inferred focus areas: ${topicsStr}
+- Executive Summary: ${sum.summary || 'No summary text available.'}
+
+## Action Items
+
+| Sl No | Task | Assigned To | Deadline | Status |
+|------|------|-------------|----------|--------|
+${actionsList}
+
+## Key Decisions Taken
+${decisionsList}
+
+## Risks / Blockers
+- None identified in the captured text.
+
+## Next Meeting
+- **Date:** Unknown
+- **Time:** Unknown
+- **Agenda:** Follow-up
+
+---
+**Meeting Ended At:** Unknown`;
+
+  const oldSummaryMarkdown = `# MoM Summary
+
+- Meeting held on: Inferred Date
+- Main discussion: Executive summary and key topics.
+- Key decisions:
+${decisionsList}
+- Action items:
+${sum.action_items ? sum.action_items.map(item => `  - ${item} → Assigned to Inferred Speaker`).join('\n') : '  - Review transcript details → Assigned to All'}
+- Deadlines:
+${sum.action_items ? sum.action_items.map((_, idx) => `  - Task ${idx+1} → DD/MM/YYYY`).join('\n') : '  - Task 1 → DD/MM/YYYY'}
+- Next meeting scheduled on: Unknown`;
+
+  return {
+    mom: oldMomMarkdown,
+    summary: oldSummaryMarkdown
+  };
+};
 
 function App() {
   const [file, setFile] = useState(null);
@@ -13,6 +95,11 @@ function App() {
   const [segments, setSegments] = useState([]);
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [summary, setSummary] = useState(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [activeId, setActiveId] = useState(null);
+  const [activeTab, setActiveTab] = useState('transcript'); // 'transcript' | 'summary'
+  const [momSubTab, setMomSubTab] = useState('detailed'); // 'detailed' | 'brief'
 
   const fileInputRef = useRef(null);
   const audioRef = useRef(null);
@@ -115,6 +202,9 @@ function App() {
       setActiveFileName(response.data.filename);
       setAudioUrl(response.data.audio_url);
       setSegments(response.data.segments);
+      setActiveId(response.data.id);
+      setSummary(null);
+      setActiveTab('transcript');
       setView('editor');
       fetchHistory(); // Refresh history
     } catch (err) {
@@ -131,6 +221,9 @@ function App() {
     setActiveFileName('');
     setAudioUrl('');
     setSegments([]);
+    setSummary(null);
+    setActiveId(null);
+    setActiveTab('transcript');
     setView('landing');
     setError(null);
     setIsPlaying(false);
@@ -152,6 +245,9 @@ function App() {
     setActiveFileName(item.filename);
     setAudioUrl(item.audio_path);
     setSegments(item.segments || []);
+    setSummary(item.summary || null);
+    setActiveId(item.id);
+    setActiveTab(item.summary ? 'summary' : 'transcript');
     setView('editor');
     setIsPlaying(false);
   };
@@ -165,6 +261,54 @@ function App() {
       console.error('Failed to delete history item:', err);
     }
   };
+
+  const handleSummarize = async () => {
+    console.log('--- Summarization Debug START ---');
+    console.log('Current activeId:', activeId);
+    console.log('Current transcript length:', transcript?.length);
+
+    if (!activeId) {
+      console.error('Missing activeId');
+      window.alert('Error: No active ID found. Please try re-selecting the transcription from history or refresh the app.');
+      return;
+    }
+
+    setIsSummarizing(true);
+    setActiveTab('summary');
+
+    try {
+      console.log('Sending POST to: http://127.0.0.1:8000/summarize/' + activeId);
+      const url = `http://127.0.0.1:8000/summarize/${activeId}`;
+      const response = await axios.post(url);
+
+      console.log('Server response received successfully:', response.data);
+
+      if (!response.data || typeof response.data !== 'object') {
+        throw new Error('Invalid response format from server');
+      }
+
+      setSummary(response.data);
+      console.log('Summary state set, fetching history...');
+      fetchHistory();
+    } catch (err) {
+      console.error('--- Summarization FAILED ---');
+      console.error('Error object:', err);
+      const errorMsg = err.response?.data?.detail || err.message || 'Unknown Error';
+      console.error('Error message:', errorMsg);
+      window.alert(`Summarization Failed (Check Console): ${errorMsg}`);
+      setError(`Failed to generate summary: ${errorMsg}`);
+    } finally {
+      setIsSummarizing(false);
+      console.log('--- Summarization Debug END ---');
+    }
+  };
+
+  // Debug effect to track summary state changes
+  useEffect(() => {
+    if (summary) {
+      console.log('Summary state updated:', summary);
+    }
+  }, [summary]);
 
   if (view === 'editor') {
     return (
@@ -199,6 +343,14 @@ function App() {
                 Export .txt
               </button>
             </div>
+            <button
+              onClick={handleSummarize}
+              disabled={isSummarizing || !transcript}
+              className={`flex items-center gap-2 px-4 py-2 border border-primary/20 bg-primary/5 text-primary rounded-lg transition-all font-medium hover:bg-primary/10 ${isSummarizing ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <span className="material-icons text-sm">{isSummarizing ? 'sync' : 'auto_awesome'}</span>
+              {isSummarizing ? 'Summarizing...' : 'Summarize | MOM'}
+            </button>
           </div>
         </header>
 
@@ -249,35 +401,163 @@ function App() {
             <div className="text-center text-[10px] text-slate-500 font-mono">
               {formatTime(currentTime)} / {audioRef.current ? formatTime(audioRef.current.duration) : '00:00'}
             </div>
+
+            <div className="flex flex-col gap-2 mt-auto">
+              <button
+                onClick={() => setActiveTab('transcript')}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-semibold ${activeTab === 'transcript' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 hover:bg-primary/5 hover:text-primary'}`}
+              >
+                <span className="material-icons">description</span>
+                Transcript
+              </button>
+              <button
+                onClick={() => setActiveTab('summary')}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-semibold ${activeTab === 'summary' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 hover:bg-primary/5 hover:text-primary'}`}
+              >
+                <span className="material-icons">auto_awesome</span>
+                Summary & MOM
+              </button>
+            </div>
           </aside>
 
-          {/* Transcription Workspace (Right) */}
+          {/* Transcription/Summary Workspace (Right) */}
           <section className="flex-1 bg-background-light dark:bg-[#101622] overflow-y-auto p-12">
             <div className="max-w-4xl mx-auto pb-24">
-              <div className="flex-1">
-                {segments.length > 0 ? (
-                  <div className="flex flex-wrap gap-x-1.5 gap-y-1">
-                    {segments.map((seg, idx) => {
-                      const isActive = currentTime >= seg.start && currentTime < seg.end;
-                      return (
-                        <span
-                          key={idx}
-                          onClick={() => handleSeekTo(seg.start)}
-                          className={`text-lg leading-relaxed font-display transition-all cursor-pointer rounded px-1
-                                          ${isActive ? 'bg-primary/20 text-primary scale-105 shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:bg-primary/5'}
-                                      `}
-                        >
-                          {seg.text}
-                        </span>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-lg leading-relaxed text-slate-700 dark:text-slate-300 font-display whitespace-pre-wrap">
-                    {transcript}
-                  </p>
-                )}
-              </div>
+              {activeTab === 'transcript' ? (
+                <div className="flex-1">
+                  {segments.length > 0 ? (
+                    <div className="flex flex-wrap gap-x-1.5 gap-y-1">
+                      {segments.map((seg, idx) => {
+                        const isActive = currentTime >= seg.start && currentTime < seg.end;
+                        return (
+                          <span
+                            key={idx}
+                            onClick={() => handleSeekTo(seg.start)}
+                            className={`text-lg leading-relaxed font-display transition-all cursor-pointer rounded px-1
+                                            ${isActive ? 'bg-primary/20 text-primary scale-105 shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:bg-primary/5'}
+                                        `}
+                          >
+                            {seg.text}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-lg leading-relaxed text-slate-700 dark:text-slate-300 font-display whitespace-pre-wrap">
+                      {transcript}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  {summary ? (
+                    <div className="space-y-6">
+                      {/* MOM Header with metadata */}
+                      <div className="p-6 bg-white dark:bg-[#151c2c] rounded-2xl border border-primary/10 shadow-lg flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-primary">
+                          <span className="material-icons text-3xl">auto_awesome</span>
+                          <div>
+                            <h3 className="text-xl font-bold">Minutes of Meeting</h3>
+                            <p className="text-xs text-slate-400 mt-0.5">AI-generated MOM report</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-4 text-center">
+                          <div className="px-4 py-2 bg-primary/5 rounded-xl">
+                            <p className="text-2xl font-bold text-primary">{summary.estimated_duration_min ?? '—'}</p>
+                            <p className="text-[10px] text-slate-400 uppercase tracking-wider">min est.</p>
+                          </div>
+                          <div className="px-4 py-2 bg-primary/5 rounded-xl">
+                            <p className="text-2xl font-bold text-primary">{summary.word_count ?? '—'}</p>
+                            <p className="text-[10px] text-slate-400 uppercase tracking-wider">words</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Sub-Tab Navigation for Detailed MoM and MoM Summary */}
+                      <div className="flex items-center justify-between bg-white dark:bg-[#151c2c] p-2.5 rounded-xl border border-primary/10 shadow-sm">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setMomSubTab('detailed')}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                              momSubTab === 'detailed'
+                                ? 'bg-primary text-white shadow-md'
+                                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                            }`}
+                          >
+                            Detailed MoM
+                          </button>
+                          <button
+                            onClick={() => setMomSubTab('brief')}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                              momSubTab === 'brief'
+                                ? 'bg-primary text-white shadow-md'
+                                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                            }`}
+                          >
+                            MoM Summary
+                          </button>
+                        </div>
+                        
+                        {/* Action buttons (Copy / Export) */}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              const { mom, summary: momSummary } = getMarkdown(summary);
+                              const textToCopy = momSubTab === 'detailed' ? mom : momSummary;
+                              navigator.clipboard.writeText(textToCopy);
+                              window.alert('Markdown copied to clipboard!');
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-primary/20 bg-primary/5 text-primary rounded-lg hover:bg-primary/10 transition-all"
+                            title="Copy Raw Markdown"
+                          >
+                            <span className="material-icons text-sm">content_copy</span>
+                            Copy Markdown
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Render Markdown Content */}
+                      <div className="p-8 bg-white dark:bg-[#151c2c] rounded-2xl border border-primary/10 shadow-md">
+                        <div 
+                          className="prose-mom"
+                          dangerouslySetInnerHTML={{
+                            __html: marked.parse(
+                              momSubTab === 'detailed' 
+                                ? getMarkdown(summary).mom 
+                                : getMarkdown(summary).summary
+                            )
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-20">
+                      <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span className="material-icons text-primary/40 text-4xl">auto_awesome</span>
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">No Summary Generated Yet</h3>
+                      <p className="text-slate-500 mb-8">Generate a context-aware Minutes of Meeting report from this transcription.</p>
+                      <button
+                        onClick={handleSummarize}
+                        disabled={isSummarizing}
+                        className="bg-primary text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 mx-auto"
+                      >
+                        {isSummarizing ? (
+                          <>
+                            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                            Generating MOM...
+                          </>
+                        ) : (
+                          <>
+                            <span className="material-icons">auto_awesome</span>
+                            Generate MOM Now
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </section>
         </main>

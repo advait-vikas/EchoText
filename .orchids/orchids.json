@@ -1,0 +1,10 @@
+{
+  "projectId": "741f8465-97f8-4ee2-8e27-bc4c31b3342d",
+  "createdAt": 1772800048906,
+  "version": "1.0",
+  "startupCommands": [
+    "powershell -ExecutionPolicy Bypass -NoProfile -Command \"Set-Location 'C:\\Users\\advai\\Desktop\\Code\\text_to_voice\\backend'; python -m uvicorn main:app --port 8000\"",
+    "npm.cmd run dev --prefix C:/Users/advai/Desktop/Code/text_to_voice/frontend"
+  ],
+  "templateId": "any"
+}

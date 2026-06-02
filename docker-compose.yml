@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  echotext:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: echotext-app
+    ports:
+      - "8000:8000"
+      - "5173:5173"
+    volumes:
+      - ./app_data:/app/data
+    environment:
+      - RUNNING_IN_DOCKER=true
+    restart: unless-stopped

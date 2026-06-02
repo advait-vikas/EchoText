@@ -1,7 +1,28 @@
-const { app, BrowserWindow, Menu, dialog } = require('electron');
+const electron = require('electron');
+const fs = require('fs');
+const path = require('path');
+
+// FAILSAFE: If ELECTRON_RUN_AS_NODE is set, Electron runs as Node.js and require('electron') returns a string path.
+// We must detect this, unset the variable, and respawn the application.
+if (typeof electron === 'string') {
+    const { spawn } = require('child_process');
+    const env = { ...process.env };
+    delete env.ELECTRON_RUN_AS_NODE;
+
+    // Respawn the same executable with the cleaned environment
+    const child = spawn(process.execPath, process.argv.slice(1), {
+        env,
+        detached: true,
+        stdio: 'ignore'
+    });
+    child.unref();
+
+    process.exit(0);
+}
+
+const { app, BrowserWindow, Menu, dialog } = electron;
 const { spawn } = require('child_process');
 const http = require('http');
-const path = require('path');
 
 let mainWindow;
 let backendProcess = null;
@@ -9,7 +30,8 @@ let frontendProcess = null;
 const BACKEND_PORT = 8000;
 const FRONTEND_PORT = 5173;
 
-let servicesWeStarted = { backend: false, frontend: false };
+// Check if running in development or production
+const isDev = !app.isPackaged;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -26,8 +48,27 @@ function createWindow() {
 
     Menu.setApplicationMenu(null);
 
-    mainWindow.loadURL(`http://localhost:${FRONTEND_PORT}`);
-    mainWindow.webContents.openDevTools();
+    if (isDev) {
+        mainWindow.loadURL(`http://localhost:${FRONTEND_PORT}`);
+        // mainWindow.webContents.openDevTools();
+    } else {
+        // Path resolution for different packaging structures
+        let indexPath = path.join(__dirname, '../frontend/dist/index.html');
+        if (!fs.existsSync(indexPath)) {
+            // Fallback for electron-builder structure if different
+            indexPath = path.join(process.resourcesPath, 'app/frontend/dist/index.html');
+        }
+        if (!fs.existsSync(indexPath)) {
+            // Another common structure
+            indexPath = path.join(process.resourcesPath, 'dist/index.html');
+        }
+
+        console.log('Loading index from:', indexPath);
+        mainWindow.loadFile(indexPath).catch(err => {
+            console.error('Failed to load file:', err);
+            dialog.showErrorBox('Load Error', `Could not load index.html at ${indexPath}`);
+        });
+    }
 
     mainWindow.on('closed', () => {
         mainWindow = null;
@@ -64,13 +105,50 @@ async function startBackend() {
     }
 
     console.log('Starting Python backend...');
-    const backendDir = path.join(__dirname, '../backend');
 
-    backendProcess = spawn('python', ['-m', 'uvicorn', 'main:app', '--port', BACKEND_PORT.toString()], {
-        cwd: backendDir,
-        shell: true,
-        stdio: 'pipe'
-    });
+    let backendExec;
+    let backendCwd;
+
+    if (isDev) {
+        backendExec = 'python';
+        const backendArgs = ['-m', 'uvicorn', 'main:app', '--port', BACKEND_PORT.toString()];
+        backendCwd = path.join(__dirname, '../backend');
+
+        backendProcess = spawn(backendExec, backendArgs, {
+            cwd: backendCwd,
+            shell: true,
+            stdio: 'pipe'
+        });
+    } else {
+        // In production, use the frozen executable
+        // Try multiple locations to be robust
+        const possibleExecs = [
+            path.join(process.resourcesPath, 'echotext-backend/echotext-backend.exe'),
+            path.join(process.resourcesPath, 'backend/echotext-backend/echotext-backend.exe'),
+            path.join(__dirname, '../backend/build/exe.win-amd64-3.12/echotext-backend.exe')
+        ];
+
+        for (const execPath of possibleExecs) {
+            if (fs.existsSync(execPath)) {
+                backendExec = execPath;
+                backendCwd = path.dirname(execPath);
+                break;
+            }
+        }
+
+        if (!backendExec) {
+            throw new Error('Could not find backend executable');
+        }
+
+        console.log(`Executing: ${backendExec} in ${backendCwd}`);
+
+        backendProcess = spawn(backendExec, [], {
+            cwd: backendCwd,
+            shell: false,
+            stdio: 'pipe',
+            windowsHide: true
+        });
+    }
 
     servicesWeStarted.backend = true;
 
@@ -85,12 +163,18 @@ async function startBackend() {
     backendProcess.on('exit', (code) => {
         console.log(`Backend exited with code ${code}`);
         if (code !== 0 && code !== null) {
-            dialog.showErrorBox('Backend Error', `Backend process crashed with code ${code}`);
+            // Only show error if the app is still running
+            if (mainWindow) {
+                dialog.showErrorBox('Backend Error', `Backend process crashed with code ${code}`);
+            }
         }
     });
 }
 
 async function startFrontend() {
+    // Only start frontend dev server in dev mode
+    if (!isDev) return;
+
     const isRunning = await checkServiceRunning(FRONTEND_PORT);
 
     if (isRunning) {
@@ -123,7 +207,7 @@ async function startFrontend() {
     });
 }
 
-function waitForService(port, name, maxRetries = 40) {
+function waitForService(port, name, maxRetries = 60) {
     return new Promise((resolve, reject) => {
         let retries = 0;
 
@@ -146,14 +230,13 @@ function waitForService(port, name, maxRetries = 40) {
     });
 }
 
+let servicesWeStarted = { backend: false, frontend: false };
+
 function stopServices() {
-    // Only stop services we started
     if (servicesWeStarted.backend && backendProcess) {
-        console.log('Stopping backend...');
         backendProcess.kill();
     }
     if (servicesWeStarted.frontend && frontendProcess) {
-        console.log('Stopping frontend...');
         frontendProcess.kill();
     }
 }
@@ -166,9 +249,11 @@ app.whenReady().then(async () => {
         await startBackend();
         await waitForService(BACKEND_PORT, 'Backend');
 
-        // Start frontend
-        await startFrontend();
-        await waitForService(FRONTEND_PORT, 'Frontend');
+        // Start frontend (only if in dev)
+        if (isDev) {
+            await startFrontend();
+            await waitForService(FRONTEND_PORT, 'Frontend');
+        }
 
         // Create window
         createWindow();
@@ -188,7 +273,9 @@ app.whenReady().then(async () => {
 
 app.on('window-all-closed', () => {
     stopServices();
-    app.quit();
+    if (process.platform !== 'darwin') {
+        app.quit();
+    }
 });
 
 app.on('before-quit', () => {

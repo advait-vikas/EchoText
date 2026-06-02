@@ -3,4 +3,6 @@ uvicorn
 python-multipart
 faster-whisper
 imageio-ffmpeg
+transformers>=4.40.0
 torch
+sentencepiece

@@ -41,10 +41,16 @@ backend/uploads/
 Thumbs.db
 desktop.ini
 
-# Electron
-electron/out/
-electron/dist/
+# Electron release builds
+release-build-v4/
+stitch/
 release/
+
+# Test files
+backend/test_endpoint.py
+
+# NLTK data (no longer used)
+nltk_data/
 
 # Logs
 *.log

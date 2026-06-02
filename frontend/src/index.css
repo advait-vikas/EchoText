@@ -52,3 +52,68 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #135bec;
 }
+
+/* Markdown MoM styles */
+.prose-mom h1 {
+  @apply text-2xl font-extrabold text-slate-900 dark:text-white mt-8 mb-6 border-b border-primary/20 pb-2;
+}
+
+.prose-mom h2 {
+  @apply text-lg font-bold text-slate-800 dark:text-slate-100 mt-6 mb-4;
+}
+
+.prose-mom h3 {
+  @apply text-base font-semibold text-slate-700 dark:text-slate-200 mt-4 mb-3;
+}
+
+.prose-mom p {
+  @apply text-sm text-slate-600 dark:text-slate-300 mb-4 leading-relaxed;
+}
+
+.prose-mom ul {
+  @apply list-disc pl-6 mb-4 space-y-2 text-slate-600 dark:text-slate-300;
+}
+
+.prose-mom ol {
+  @apply list-decimal pl-6 mb-4 space-y-2 text-slate-600 dark:text-slate-300;
+}
+
+.prose-mom li {
+  @apply text-sm leading-relaxed;
+}
+
+.prose-mom strong {
+  @apply font-semibold text-slate-900 dark:text-white;
+}
+
+.prose-mom table {
+  @apply w-full border-collapse my-6 text-xs text-left overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm;
+}
+
+.prose-mom thead {
+  @apply bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 uppercase text-[10px] font-semibold border-b border-slate-200 dark:border-slate-800;
+}
+
+.prose-mom th {
+  @apply px-4 py-3 font-semibold;
+}
+
+.prose-mom td {
+  @apply px-4 py-3 border-b border-slate-100 dark:border-slate-800/50 text-slate-600 dark:text-slate-300;
+}
+
+.prose-mom tr {
+  @apply transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/20;
+}
+
+.prose-mom tr:nth-child(even) {
+  @apply bg-slate-50/20 dark:bg-slate-800/10;
+}
+
+.prose-mom blockquote {
+  @apply border-l-4 border-primary/30 pl-4 py-1 italic my-4 text-slate-500 dark:text-slate-400 bg-primary/5 rounded-r-lg;
+}
+
+.prose-mom hr {
+  @apply border-t border-slate-200 dark:border-slate-800 my-8;
+}
