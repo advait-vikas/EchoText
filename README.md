@@ -44,38 +44,46 @@ AI-powered desktop audio transcription application with real-time audio-text syn
 
 ---
 
-## 📦 Prerequisites
+## 📦 Installation & Setup
 
+### 📥 Production Installer (Recommended for Users)
+To run the pre-compiled desktop application on Windows:
+1. Locate the **EchoText 1.0.0 Setup Installer** (`EchoText Setup 1.0.0.exe` inside the `release/` folder or download link).
+2. Run the setup installer to install the project on your machine.
+3. Once completed, launch the application from the desktop or start menu shortcut.
+
+---
+
+### 💻 Developer Setup (For Local Development)
+If you want to run the project from source or contribute, follow these steps:
+
+#### Prerequisites
 Ensure you have the following installed on your system:
 - **Node.js** (v18+)
 - **Python** (v3.8+)
 - **FFmpeg** (automatically configured on first startup via `imageio-ffmpeg`)
 
----
-
-## 🔧 Installation & Setup
-
-### 1️⃣ Clone the Repository
+#### 1️⃣ Clone the Repository
 ```bash
 git clone https://github.com/advait-vikas/EchoText.git
 cd text_to_voice
 ```
 
-### 2️⃣ Install Backend Dependencies
+#### 2️⃣ Install Backend Dependencies
 ```bash
 cd backend
 pip install -r requirements.txt
 cd ..
 ```
 
-### 3️⃣ Install Frontend Dependencies
+#### 3️⃣ Install Frontend Dependencies
 ```bash
 cd frontend
 npm install
 cd ..
 ```
 
-### 4️⃣ Install Electron Dependencies
+#### 4️⃣ Install Electron Dependencies
 ```bash
 npm install
 ```
@@ -153,6 +161,32 @@ text_to_voice/
 3. **Synchronization**: In the editor, click any word to seek the audio player to that exact timestamp.
 4. **Minutes of Meeting (MoM)**: Click **Summarize | MOM** to generate detailed structured notes and actionable items from the transcription.
 5. **History & Export**: Access previous transcriptions from the sidebar or export them to `.txt`.
+
+---
+
+## 🏗️ Building the Standalone Production Installer
+
+You can compile and bundle EchoText into a standalone Windows Installer (`.exe`) using the built-in **NSIS installer** (via `electron-builder`).
+
+### 1️⃣ Build Prerequisites
+Ensure `cx_Freeze` is installed to compile the Python backend:
+```bash
+pip install cx_Freeze
+```
+
+### 2️⃣ Compile the Python Backend Executable
+Run the backend compilation script:
+```bash
+npm run backend:build
+```
+This generates the standalone compiled Python backend folder at `backend/build/exe.win-amd64-3.12/`.
+
+### 3️⃣ Package & Build the Installer
+To compile the React frontend, package the compiled backend, and bundle everything into an NSIS installer:
+```bash
+npm run electron:build
+```
+The installer executable (e.g., `EchoText Setup 1.0.0.exe`) will be generated inside the `release/` directory.
 
 ---
 
